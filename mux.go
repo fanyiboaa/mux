@@ -203,6 +203,14 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if r.Match(req, &match) {
 		handler = match.Handler
 		if handler != nil {
+			// Note: The defer statement is used to assign the value of req.MultipartForm back to the original request's MultipartForm (originReq) when the function returns.
+			// This is necessary because the 'req' variable may be modified later in the code, and there is a risk that MultipartForm may not be properly assigned to the original request (originReq).
+			// Since the 'req' is a shallow copy of the original request, any changes to req.MultipartForm during the request handling might not reflect back to the original request.
+			// By using 'defer', we ensure that the MultipartForm is correctly restored to the original request when the function exits.
+			defer func(originReq *http.Request) {
+				originReq.MultipartForm = req.MultipartForm
+			}(req)
+
 			// Populate context for custom handlers
 			if r.omitRouteFromContext {
 				// Only populate the match vars (if any) into the context.
